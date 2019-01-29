@@ -5,3 +5,6 @@ python:
 
 script:
   - python3 freetests.py
+
+notifications:
+  - email: false
