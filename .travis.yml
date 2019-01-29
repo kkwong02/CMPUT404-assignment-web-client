@@ -3,7 +3,5 @@ python:
   - "3.5.2" # lab machine version
   - "3.6.7" # vm version
 
-before_build:
-  - chmod +x freetests.py
 script:
-  - ./freetests
+  - python3 freetests.py
