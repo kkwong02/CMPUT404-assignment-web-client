@@ -24,13 +24,19 @@ import re
 # you may use urllib to encode data appropriately
 import urllib.parse
 
+
 def help():
     print("httpclient.py [GET/POST] [URL]\n")
+
 
 class HTTPResponse(object):
     def __init__(self, code=200, body=""):
         self.code = code
         self.body = body
+
+    def __repr__(self):
+        return self.body
+
 
 class HTTPClient(object):
     #def get_host_port(self,url):
@@ -43,7 +49,8 @@ class HTTPClient(object):
     def get_code(self, data):
         return None
 
-    def get_headers(self,data):
+
+    def get_headers(self, data):
         return None
 
     def get_body(self, data):
@@ -79,10 +86,11 @@ class HTTPClient(object):
 
     def command(self, url, command="GET", args=None):
         if (command == "POST"):
-            return self.POST( url, args )
+            return self.POST(url, args)
         else:
-            return self.GET( url, args )
+            return self.GET(url, args)
     
+
 if __name__ == "__main__":
     client = HTTPClient()
     command = "GET"
@@ -90,6 +98,6 @@ if __name__ == "__main__":
         help()
         sys.exit(1)
     elif (len(sys.argv) == 3):
-        print(client.command( sys.argv[2], sys.argv[1] ))
+        print(client.command(sys.argv[2], sys.argv[1]))
     else:
-        print(client.command( sys.argv[1] ))
+        print(client.command(sys.argv[1]))
