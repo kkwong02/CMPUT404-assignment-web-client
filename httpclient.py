@@ -30,19 +30,42 @@ def help():
 
 
 class HTTPResponse(object):
-    def __init__(self, code=200, body=""):
+    def __init__(self, code=200, body="", raw_data=b""):
         self.code = code
         self.body = body
+        self.header = ""
+
+        if raw_data:
+            self.raw_data = raw_data
+            self.parse_data()
 
     def __repr__(self):
-        return self.body
+        # will default encoding to ISO-8859-1 if utf-8 isn't specified.
+        return self.raw_data or self.body
+
+    def parse_data(self):
+        header, body = self.raw_data.split(b"\r\n\r\n", 1)
+
+        # If encoding is not specified, it'll assume it's ISO-8859-1
+        encoding = "utf-8" if b"utf-8" in header else "ISO-8859-1"
+
+        self.header = header.decode(encoding)
+        self.body = body.decode(encoding)
+        self.code = int(self.header[9:12])  # "HTTP/1.1 XXX"
 
 
 class HTTPClient(object):
     # def get_host_port(self,url):
 
     def connect(self, host, port):
-        self.socket = socket.create_connection((host, port))
+        self.url = urllib.parse.urlparse(host)
+
+        try:
+            self.socket = socket.create_connection((self.url.hostname, self.url.port or 80))
+        except ConnectionError:
+            print("Error connecting to host.")
+            sys.exit(-1)
+
         return None
 
     def get_code(self, data):
@@ -72,16 +95,28 @@ class HTTPClient(object):
             else:
                 done = not part
 
-        header = buffer.split(b"\r\n\r\n")
+        self.socket.close()
 
-        # will default encoding to ISO-8859-1 if utf-8 isn't specified.
-        encoding = "utf-8" if "utf-8" in header else "ISO-8859-1"
-        return buffer.decode(encoding)
+        return HTTPResponse(raw_data=buffer)
 
     def GET(self, url, args=None):
-        code = 500
-        body = ""
-        return HTTPResponse(code, body)
+        # Here because tests call GET and POST directly...
+        self.connect(url, 80)
+
+        payload = "GET {0} HTTP/1.1\r\n"\
+            "Host: {1}\r\n"\
+            "Accept: */*\r\n"\
+            "User-agent: A2Client\r\n\r\n"
+
+        payload = payload.format(
+            self.url.path or '/',
+            self.url.hostname)
+
+        print(payload)
+
+        self.sendall(payload)
+
+        return self.recvall()
 
     def POST(self, url, args=None):
         code = 500
@@ -93,7 +128,6 @@ class HTTPClient(object):
             return self.POST(url, args)
         else:
             return self.GET(url, args)
-
 
 if __name__ == "__main__":
     client = HTTPClient()
