@@ -97,11 +97,11 @@ class HTTPClient(object):
 
         return HTTPResponse(raw_data=buffer)
 
-    def format_header(self, path, header_fields=dict()):
-        header = "GET %s HTTP/1.1\r\n"\
+    def format_header(self, method, header_fields=dict()):
+        header = "%s %s HTTP/1.1\r\n"\
             "Host: %s\r\n"\
             "Accept: */*\r\n"\
-            "User-agent: A2Client\r\n" % (path, self.url.hostname)
+            "User-agent: A2Client\r\n" % (method, self.url.path or '/', self.url.hostname)
 
         for key, value in header_fields.items():
             header += "%s: %s\r\n" % (key, value)
@@ -112,9 +112,7 @@ class HTTPClient(object):
         # Here because tests call GET and POST directly...
         self.connect(url, 80)
 
-        payload = self.format_header(self.url.path or '/')
-
-        print(payload)
+        payload = self.format_header("GET")
 
         self.sendall(payload)
 
@@ -126,13 +124,23 @@ class HTTPClient(object):
     def POST(self, url, args=None):
         self.connect(url, 80)
 
-        # encode args
-        # path = self.url.......
+        try:
+            encoded_params = urllib.parse.urlencode(args)
+        except TypeError:
+            encoded_params = ""
 
-        payload = "POST %s HTTP/1.1\r\n"\
-            "Host: %s\r\n"\
-            "Accept: */*\r\n"\
-            "User-agent"
+        payload = self.format_header(
+            "POST",
+            header_fields={
+                "Content-Type": "application/x-www-form-urlencoded",
+                "Content-Length": len(encoded_params)
+            })
+
+        print(payload)
+
+        payload += encoded_params
+
+        self.sendall(payload)
 
         return self.recvall()
 
@@ -142,15 +150,16 @@ class HTTPClient(object):
         else:
             return self.GET(url, args)
 
+
 if __name__ == "__main__":
     client = HTTPClient()
     command = "GET"
     if (len(sys.argv) <= 1):
         help()
         sys.exit(1)
-    elif (len(sys.argv) == 3):
+    elif (len(sys.argv) == 3): 
         print(client.command(sys.argv[2], sys.argv[1]))
-    else:
+    else: 
         print(client.command(sys.argv[1]))
 
     client.close()
