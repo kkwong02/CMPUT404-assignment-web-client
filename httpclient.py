@@ -36,15 +36,13 @@ class HTTPResponse(object):
         self.header = ""
 
         if raw_data:
-            self.raw_data = raw_data
-            self.parse_data()
+            self.parse_data(raw_data)
 
     def __repr__(self):
-        # will default encoding to ISO-8859-1 if utf-8 isn't specified.
-        return self.raw_data or self.body
+        return self.body
 
-    def parse_data(self):
-        header, body = self.raw_data.split(b"\r\n\r\n", 1)
+    def parse_data(self, raw_data):
+        header, body = raw_data.split(b"\r\n\r\n", 1)
 
         # If encoding is not specified, it'll assume it's ISO-8859-1
         encoding = "utf-8" if b"utf-8" in header else "ISO-8859-1"
@@ -99,18 +97,22 @@ class HTTPClient(object):
 
         return HTTPResponse(raw_data=buffer)
 
+    def format_header(self, path, header_fields=dict()):
+        header = "GET %s HTTP/1.1\r\n"\
+            "Host: %s\r\n"\
+            "Accept: */*\r\n"\
+            "User-agent: A2Client\r\n" % (path, self.url.hostname)
+
+        for key, value in header_fields.items():
+            header += "%s: %s\r\n" % (key, value)
+
+        return header + "\r\n"
+
     def GET(self, url, args=None):
         # Here because tests call GET and POST directly...
         self.connect(url, 80)
 
-        payload = "GET {0} HTTP/1.1\r\n"\
-            "Host: {1}\r\n"\
-            "Accept: */*\r\n"\
-            "User-agent: A2Client\r\n\r\n"
-
-        payload = payload.format(
-            self.url.path or '/',
-            self.url.hostname)
+        payload = self.format_header(self.url.path or '/')
 
         print(payload)
 
@@ -118,10 +120,21 @@ class HTTPClient(object):
 
         return self.recvall()
 
+    # POST sends a post request to url
+    # url url to send request to 
+    # args - a dictionary with arguments of the post request.
     def POST(self, url, args=None):
-        code = 500
-        body = ""
-        return HTTPResponse(code, body)
+        self.connect(url, 80)
+
+        # encode args
+        # path = self.url.......
+
+        payload = "POST %s HTTP/1.1\r\n"\
+            "Host: %s\r\n"\
+            "Accept: */*\r\n"\
+            "User-agent"
+
+        return self.recvall()
 
     def command(self, url, command="GET", args=None):
         if (command == "POST"):
