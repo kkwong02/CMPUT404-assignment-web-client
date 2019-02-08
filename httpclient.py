@@ -56,6 +56,9 @@ class HTTPClient(object):
     # def get_host_port(self,url):
 
     def connect(self, host, port):
+        if not host.startswith("http"):
+            host = "http://" + host
+
         self.url = urllib.parse.urlparse(host)
 
         try:
@@ -136,9 +139,8 @@ class HTTPClient(object):
                 "Content-Length": len(encoded_params)
             })
 
-        print(payload)
-
         payload += encoded_params
+        print(payload)
 
         self.sendall(payload)
 
@@ -147,19 +149,24 @@ class HTTPClient(object):
     def command(self, url, command="GET", args=None):
         if (command == "POST"):
             return self.POST(url, args)
-        else:
+        elif command == "GET":
             return self.GET(url, args)
 
 
 if __name__ == "__main__":
     client = HTTPClient()
     command = "GET"
-    if (len(sys.argv) <= 1):
+    if (len(sys.argv) <= 1): # no arguments
         help()
         sys.exit(1)
-    elif (len(sys.argv) == 3): 
+    elif (len(sys.argv) == 3):  # GET or POST with URL
         print(client.command(sys.argv[2], sys.argv[1]))
-    else: 
+
+    elif (len(sys.argv) == 2):  # just a url
         print(client.command(sys.argv[1]))
+
+    else:  # CMD url parameters
+        args = dict(map(lambda x: x.split('='),  sys.argv[3:]))
+        print(client.command(sys.argv[2], sys.argv[1], args=args))
 
     client.close()
