@@ -1,5 +1,3 @@
-[![Build Status](https://travis-ci.org/kkwong02/CMPUT404-assignment-web-client.svg?branch=master)](https://travis-ci.org/kkwong02/CMPUT404-assignment-web-client)
-
 
 CMPUT404-assignment-web-client
 ==============================
